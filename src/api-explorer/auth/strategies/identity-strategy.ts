@@ -1,10 +1,10 @@
-import { AuthStrategy } from "../types.js";
+import { IdentifiableStrategy } from "../types.js";
 
 /**
  * Highly flexible authentication strategy for custom headers and identifiers.
  * Useful for scenarios like "Authorization: UID <identifier>" or "X-API-Key: <key>".
  */
-export class IdentityStrategy implements AuthStrategy {
+export class IdentityStrategy implements IdentifiableStrategy {
   name = "Identity";
   private currentIdentifier: string;
 

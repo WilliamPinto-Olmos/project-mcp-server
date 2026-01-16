@@ -1,4 +1,4 @@
-import { AuthContext, AuthStrategy } from "./types.js";
+import { AuthContext, AuthStrategy, isIdentifiable } from "./types.js";
 import { BearerStrategy } from "./strategies/bearer-strategy.js";
 import { IdentityStrategy } from "./strategies/identity-strategy.js";
 import { NoAuthStrategy } from "./strategies/no-auth-strategy.js";
@@ -17,7 +17,7 @@ export class GlobalAuthContext implements AuthContext {
   constructor(public strategy: AuthStrategy) {}
 
   setIdentifier(value: string): void {
-    if (this.strategy instanceof IdentityStrategy) {
+    if (isIdentifiable(this.strategy)) {
       this.strategy.setIdentifier(value);
     } else {
       console.error(`Current strategy ${this.strategy.name} does not support setting an identifier.`);
@@ -25,7 +25,7 @@ export class GlobalAuthContext implements AuthContext {
   }
 
   getIdentifier(): string {
-    if (this.strategy instanceof IdentityStrategy) {
+    if (isIdentifiable(this.strategy)) {
       return this.strategy.getIdentifier();
     }
     return "";

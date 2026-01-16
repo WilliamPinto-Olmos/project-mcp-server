@@ -12,6 +12,22 @@ export interface AuthStrategy {
 }
 
 /**
+ * Extension of AuthStrategy that supports dynamic identity changes.
+ * Implement this interface if your custom strategy needs impersonation.
+ */
+export interface IdentifiableStrategy extends AuthStrategy {
+  setIdentifier(value: string): void;
+  getIdentifier(): string;
+}
+
+/**
+ * Type guard to check if a strategy supports identifier changes.
+ */
+export function isIdentifiable(strategy: AuthStrategy): strategy is IdentifiableStrategy {
+  return 'setIdentifier' in strategy && 'getIdentifier' in strategy;
+}
+
+/**
  * Manages the current authentication state and allows dynamic identifier updates.
  */
 export interface AuthContext {
