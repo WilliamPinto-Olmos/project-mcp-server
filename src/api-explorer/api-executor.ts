@@ -36,7 +36,6 @@ export class ApiExecutor {
 
     // Add interceptor for dynamic auth and hooks
     this.client.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-      // 1. Inject Dynamic Auth Headers
       const authHeaders = await this.authContext.getHeaders();
       
       // Log for debugging (stderr)
@@ -46,7 +45,6 @@ export class ApiExecutor {
 
       Object.assign(config.headers, authHeaders);
 
-      // 2. Run Request Hooks
       return await runRequestHooks(config);
     });
   }
