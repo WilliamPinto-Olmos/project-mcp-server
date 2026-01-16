@@ -1,0 +1,10 @@
+src
+tests
+tsconfig.json
+jest.config.js
+.env
+.env.example
+.git
+node_modules
+*.tsbuildinfo
+openapi-spec.json
