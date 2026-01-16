@@ -12,14 +12,21 @@
     "README.md"
   ],
   "type": "module",
+  "typesVersions": {
+    "*": {
+      "api-explorer": ["./dist/api-explorer/index.d.ts"]
+    }
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./api-explorer": {
       "types": "./dist/api-explorer/index.d.ts",
-      "import": "./dist/api-explorer/index.js"
+      "import": "./dist/api-explorer/index.js",
+      "default": "./dist/api-explorer/index.js"
     }
   },
   "scripts": {
