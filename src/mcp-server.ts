@@ -22,10 +22,14 @@ export class MCPServer {
   private apiExecutor: ApiExecutor;
   private authContext: AuthContext;
 
-  constructor(private specPath: string) {
+  /**
+   * @param specPath - Path to the OpenAPI specification file.
+   * @param authContext - Optional custom AuthContext. If not provided, creates one from environment variables.
+   */
+  constructor(private specPath: string, authContext?: AuthContext) {
     this.parser = new OpenAPIParser();
     this.toolGenerator = new ToolGenerator(this.parser);
-    this.authContext = createAuthContextFromEnv();
+    this.authContext = authContext || createAuthContextFromEnv();
     this.apiExecutor = new ApiExecutor(undefined, this.authContext);
 
     this.server = new McpServer({
