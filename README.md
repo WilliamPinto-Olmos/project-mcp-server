@@ -1,6 +1,6 @@
-# OpenAPI MCP Server
+# Your project's MCP Server
 
-A powerful Model Context Protocol (MCP) server that dynamically explores and interacts with any API defined by an OpenAPI specification.
+A powerful Model Context Protocol (MCP) server that dynamically serves context about your project. It can explore and interact with any API defined by an OpenAPI specification.
 
 ## For LLM Agents: How to use this MCP
 
