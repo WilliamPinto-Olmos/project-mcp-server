@@ -42,24 +42,84 @@ npm install @williamp29/project-mcp-server
 Create a file (e.g., `mcp-server.ts`) to configure and start your server:
 
 ```typescript
-import { MCPServer } from "@williamp29/project-mcp-server";
+import { MCPServer, MySQLDriver } from "@williamp29/project-mcp-server";
 import { AuthStrategy, GlobalAuthContext } from "@williamp29/project-mcp-server/api-explorer";
 
-// (Optional) Define a custom authentication strategy
+// 1. (Optional) Define a custom authentication strategy for APIs
 class MyCustomAuth implements AuthStrategy {
   name = "MyCustomAuth";
   async getHeaders() {
-    // Fetch token from vault, env, or database
     return { "Authorization": `Bearer ${process.env.MY_API_TOKEN}` };
   }
 }
 
+// 2. (Optional) Initialize a database driver
+// You can use the built-in MySQLDriver
+const mysqlDriver = new MySQLDriver({
+  host: process.env.DB_HOST || "localhost",
+  port: 3306,
+  user: "root",
+  password: "password",
+  database: "my_database"
+});
+
+// 3. Create and start the server
 const server = new MCPServer({
-  specPath: "./openapi-spec.json", // Path to your OpenAPI spec
-  authContext: new GlobalAuthContext(new MyCustomAuth())
+  specPath: "./openapi-spec.json",
+  authContext: new GlobalAuthContext(new MyCustomAuth()),
+  database: {
+    driver: mysqlDriver,
+    permissions: {
+      enableRunQuery: true,         // Default: true
+      enableRunUpdateStatement: true, // Default: true
+      enableRunDeleteStatement: false, // Default: false
+      enableRunStatement: false      // Default: false
+    }
+  }
 });
 
 server.start().catch(console.error);
+```
+
+### 3. Custom Database Drivers
+You can implement your own database driver by satisfying the `DbDriver` interface. This allows you to use any database (PostgreSQL, SQLite, etc.) with the MCP server.
+
+```typescript
+import { MCPServer, DbDriver, DbDriverPermissions, DbDriverToolDefinitions } from "@williamp29/project-mcp-server";
+
+class MyPostgresDriver implements DbDriver {
+  name = "postgres";
+  
+  async connect() { /* ... */ }
+  async disconnect() { /* ... */ }
+  
+  // Implement introspection methods
+  async listTables() { /* ... */ }
+  async listTableNames() { return ["table1", "table2"]; }
+  async describeTable(table: string) { /* ... */ }
+  // ... other DbDriver methods
+
+  // Define which tools this driver supports
+  getToolDefinitions(permissions: DbDriverPermissions): DbDriverToolDefinitions {
+    return {
+      db_list_tables: { description: "List all tables" },
+      // ...
+    };
+  }
+
+  // Handle tool execution
+  async handleToolCall(name: string, args: any) {
+    if (name === "db_list_tables") return this.listTables();
+    // ...
+  }
+}
+
+const server = new MCPServer({
+  specPath: "./openapi-spec.json",
+  database: {
+    driver: new MyPostgresDriver()
+  }
+});
 ```
 
 ### 3. Add Script to package.json
@@ -113,8 +173,9 @@ These variables control the server behavior. They are automatically loaded if yo
   - `api_set_identity`: Switch the active user context for API calls dynamically during a session.
 
 - **Database Explorer**:
-  - Inspect schemas with `db_list_tables`, `db_describe_tables`, and `db_get_schemas`.
+  - Inspect schemas with `db_list_tables`, `db_list_table_names`, `db_describe_tables`, and `db_get_schemas`.
   - Discover database structure with `db_get_relationships` (supports table filtering).
   - Analyze data with `db_get_table_stats` and `db_sample_rows`.
   - Run validated SQL with `db_run_query`, `db_run_update_statement`, and `db_run_delete_statement`.
-  - Supports MySQL (driver included).
+  - Extensible architecture: Supports **Custom Drivers**!
+  - Includes `MySQLDriver` for direct MySQL/MariaDB usage.

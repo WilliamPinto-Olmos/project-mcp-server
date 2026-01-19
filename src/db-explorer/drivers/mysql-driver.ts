@@ -1,7 +1,7 @@
 import mysql, { Pool, RowDataPacket, ResultSetHeader } from "mysql2/promise";
+import { z } from "zod";
 import { 
   DbDriver, 
-  DbConfig, 
   TableInfo, 
   ColumnInfo, 
   Relationship, 
@@ -9,15 +9,26 @@ import {
   QueryResult, 
   UpdateResult, 
   DeleteResult, 
-  StatementResult 
+  StatementResult,
+  DbDriverPermissions,
+  DbDriverToolDefinitions
 } from "../types.js";
+
+export interface MySQLDriverConfig {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+  poolSize?: number;
+}
 
 export class MySQLDriver implements DbDriver {
   public name = "mysql";
   private pool: Pool | null = null;
-  private config: DbConfig;
+  private config: MySQLDriverConfig;
 
-  constructor(config: DbConfig) {
+  constructor(config: MySQLDriverConfig) {
     this.config = config;
   }
 
@@ -52,20 +63,38 @@ export class MySQLDriver implements DbDriver {
     return this.pool;
   }
 
-  async listTables(): Promise<TableInfo[]> {
+  async listTables(tables?: string[]): Promise<TableInfo[]> {
+    let query = `SELECT TABLE_NAME as name, TABLE_SCHEMA as \`schema\`, TABLE_TYPE as type, TABLE_COMMENT as comment 
+       FROM INFORMATION_SCHEMA.TABLES 
+       WHERE TABLE_SCHEMA = ?`;
+    
+    const params: any[] = [this.config.database];
+
+    if (tables && tables.length > 0) {
+      const placeholders = tables.map(() => "?").join(",");
+      query += ` AND TABLE_NAME IN (${placeholders})`;
+      params.push(...tables);
+    }
+
+    const [rows] = await this.getPool().execute<RowDataPacket[]>(query, params);
+
+    return rows.map((r: RowDataPacket) => ({
+      name: r.name,
+      schema: r.schema,
+      type: r.type as 'BASE TABLE' | 'VIEW',
+      comment: r.comment || undefined
+    }));
+  }
+
+  async listTableNames(): Promise<string[]> {
     const [rows] = await this.getPool().execute<RowDataPacket[]>(
-      `SELECT TABLE_NAME as name, TABLE_SCHEMA as \`schema\`, TABLE_TYPE as type, TABLE_COMMENT as comment 
+      `SELECT TABLE_NAME as name 
        FROM INFORMATION_SCHEMA.TABLES 
        WHERE TABLE_SCHEMA = ?`,
       [this.config.database]
     );
 
-    return rows.map((r: RowDataPacket) => ({
-      name: r.name,
-      schema: r.schema,
-      type: r.type,
-      comment: r.comment || undefined
-    }));
+    return rows.map((r: RowDataPacket) => r.name);
   }
 
   async describeTable(table: string): Promise<ColumnInfo[]> {
@@ -215,5 +244,125 @@ export class MySQLDriver implements DbDriver {
       success: true,
       data: result
     };
+  }
+
+  getToolDefinitions(permissions: DbDriverPermissions = {}): DbDriverToolDefinitions {
+    const tools: DbDriverToolDefinitions = {
+      db_list_tables: {
+        description: "List all tables in the current database.",
+        inputSchema: z.object({
+          tables: z.array(z.string()).optional().describe("Optional list of table names to filter by. If not provided, all tables are returned."),
+        }),
+      },
+      db_list_table_names: {
+        description: "List all table names in the current database.",
+      },
+      db_describe_tables: {
+        description: "Get detailed information about columns for multiple tables.",
+        inputSchema: z.object({
+          tables: z.array(z.string()).describe("List of table names to describe."),
+        }),
+      },
+      db_get_schemas: {
+        description: "Get the DDL statements for multiple tables.",
+        inputSchema: z.object({
+          tables: z.array(z.string()).describe("List of table names."),
+        }),
+      },
+      db_get_relationships: {
+        description: "Get foreign key relationships in the database, optionally filtered by tables.",
+        inputSchema: z.object({
+          tables: z.array(z.string()).optional().describe("Optional list of table names to filter relationships by."),
+        }),
+      },
+      db_get_table_stats: {
+        description: "Get row count and other statistics for a table.",
+        inputSchema: z.object({
+          table: z.string().describe("The name of the table."),
+        }),
+      },
+      db_sample_rows: {
+        description: "Fetch sample rows from a table.",
+        inputSchema: z.object({
+          table: z.string().describe("The name of the table."),
+          limit: z.number().optional().default(10).describe("Maximum number of rows to fetch."),
+        }),
+      },
+    };
+
+    if (permissions.enableRunQuery !== false) {
+      tools.db_run_query = {
+        description: "Execute a read-only SELECT query. Blocks modification keywords.",
+        inputSchema: z.object({
+          query: z.string().describe("The SQL SELECT query to execute."),
+        }),
+      };
+    }
+
+    if (permissions.enableRunUpdateStatement !== false) {
+      tools.db_run_update_statement = {
+        description: "Execute an INSERT or UPDATE statement. Blocks DELETE and other dangerous keywords.",
+        inputSchema: z.object({
+          query: z.string().describe("The SQL INSERT/UPDATE statement."),
+        }),
+      };
+    }
+
+    if (permissions.enableRunDeleteStatement === true) {
+      tools.db_run_delete_statement = {
+        description: "Execute a DELETE or TRUNCATE statement. Blocks DROP/ALTER.",
+        inputSchema: z.object({
+          query: z.string().describe("The SQL DELETE/TRUNCATE statement."),
+        }),
+      };
+    }
+
+    if (permissions.enableRunStatement === true) {
+      tools.db_run_statement = {
+        description: "Execute any SQL statement. Full access, use with extreme caution. Disabled by default.",
+        inputSchema: z.object({
+          query: z.string().describe("The SQL statement to execute."),
+        }),
+      };
+    }
+
+    return tools;
+  }
+
+  async handleToolCall(name: string, args: any): Promise<any> {
+    switch (name) {
+      case "db_list_tables":
+        return await this.listTables(args.tables);
+      case "db_list_table_names":
+        return await this.listTableNames();
+      case "db_describe_tables":
+        const describeResults: Record<string, any> = {};
+        for (const table of args.tables) {
+          describeResults[table] = await this.describeTable(table);
+        }
+        return describeResults;
+      case "db_get_schemas":
+        const schemaResults: Record<string, string> = {};
+        for (const table of args.tables) {
+          schemaResults[table] = await this.getTableSchema(table);
+        }
+        return schemaResults;
+      case "db_get_relationships":
+        return await this.getRelationships(args.tables);
+      case "db_get_table_stats":
+        return await this.getTableStats(args.table);
+      case "db_sample_rows":
+        return await this.sampleRows(args.table, args.limit);
+      case "db_run_query":
+        return await this.executeQuery(args.query);
+      case "db_run_update_statement":
+        return await this.executeUpdate(args.query);
+      case "db_run_delete_statement":
+        return await this.executeDelete(args.query);
+      case "db_run_statement":
+        return await this.executeStatement(args.query);
+      default:
+        throw new Error(`Unknown database tool: ${name}`);
+    }
   }
 }

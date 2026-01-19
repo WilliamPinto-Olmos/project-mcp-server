@@ -1,17 +1,11 @@
 import { jest } from "@jest/globals";
 import { DbExecutor } from "../../src/db-explorer/db-executor.js";
-import { DbDriver, DbConfig } from "../../src/db-explorer/types.js";
+import { DbDriver, DbDriverPermissions } from "../../src/db-explorer/types.js";
 
 describe("DbExecutor", () => {
   let executor: DbExecutor;
   let mockDriver: jest.Mocked<DbDriver>;
-  const config: DbConfig = {
-    driver: "mysql",
-    host: "localhost",
-    port: 3306,
-    user: "root",
-    password: "password",
-    database: "testdb",
+  const permissions: DbDriverPermissions = {
     enableRunQuery: true,
     enableRunUpdateStatement: true,
     enableRunDeleteStatement: false,
@@ -35,7 +29,7 @@ describe("DbExecutor", () => {
       executeStatement: jest.fn(),
     } as any;
 
-    executor = new DbExecutor(mockDriver, config);
+    executor = new DbExecutor(mockDriver, permissions);
   });
 
   describe("Query Safety", () => {
@@ -71,7 +65,7 @@ describe("DbExecutor", () => {
 
     it("should block DROP in runDeleteStatement", async () => {
       // Re-create executor with delete enabled to test validation
-      executor = new DbExecutor(mockDriver, { ...config, enableRunDeleteStatement: true });
+      executor = new DbExecutor(mockDriver, { ...permissions, enableRunDeleteStatement: true });
       await expect(executor.runDeleteStatement("DROP TABLE users"))
         .rejects.toThrow("Only removal queries");
     });

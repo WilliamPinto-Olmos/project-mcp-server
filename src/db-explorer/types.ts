@@ -1,9 +1,27 @@
+import { z } from "zod";
+
+export interface DbDriverToolDefinition {
+  description: string;
+  inputSchema?: z.ZodType;
+}
+
+export type DbDriverToolDefinitions = Record<string, DbDriverToolDefinition>;
+
+export interface DbDriverPermissions {
+  enableRunQuery?: boolean;
+  enableRunUpdateStatement?: boolean;
+  enableRunDeleteStatement?: boolean;
+  enableRunStatement?: boolean;
+}
+
 export interface DbDriver {
   name: string;
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   
-  listTables(): Promise<TableInfo[]>;
+  // Core introspection methods
+  listTables(tables?: string[]): Promise<TableInfo[]>;
+  listTableNames(): Promise<string[]>; // Added for the new tool
   describeTable(table: string): Promise<ColumnInfo[]>;
   getTableSchema(table: string): Promise<string>;
   getRelationships(tables?: string[]): Promise<Relationship[]>;
@@ -11,12 +29,20 @@ export interface DbDriver {
   
   sampleRows(table: string, limit?: number): Promise<any[]>;
   
+  // Low-level execution methods
   executeQuery(query: string): Promise<QueryResult>;
   executeUpdate(query: string): Promise<UpdateResult>;
   executeDelete(query: string): Promise<DeleteResult>;
   executeStatement(query: string): Promise<StatementResult>;
+
+  // Tool integration
+  getToolDefinitions(permissions?: DbDriverPermissions): DbDriverToolDefinitions;
+  handleToolCall(name: string, args: any): Promise<any>;
 }
 
+/**
+ * @deprecated Use driver-specific configuration and DbDriverPermissions instead.
+ */
 export interface DbConfig {
   driver: 'mysql';
   host: string;

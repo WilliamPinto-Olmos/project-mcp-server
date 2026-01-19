@@ -6,8 +6,7 @@ import { ToolGenerator } from "./api-explorer/tool-generator.js";
 import { ApiExecutor } from "./api-explorer/api-executor.js";
 import { AuthContext, createAuthContextFromEnv } from "./api-explorer/auth/index.js";
 import { createDbConfigFromEnv, DbExecutor, DbToolGenerator } from "./db-explorer/index.js";
-import type { DbConfig } from "./db-explorer/index.js";
-import { MySQLDriver } from "./db-explorer/drivers/mysql-driver.js";
+import type { DatabaseConfig } from "./db-explorer/index.js";
 
 
 /**
@@ -22,7 +21,7 @@ import { MySQLDriver } from "./db-explorer/drivers/mysql-driver.js";
 export interface MCPServerOptions {
   specPath: string;
   authContext?: AuthContext;
-  dbConfig?: DbConfig;
+  database?: DatabaseConfig;
 }
 
 /**
@@ -52,13 +51,12 @@ export class MCPServer {
     this.parser = new OpenAPIParser();
     this.toolGenerator = new ToolGenerator(this.parser);
     this.authContext = options.authContext || createAuthContextFromEnv();
-    const dbConfig = options.dbConfig || createDbConfigFromEnv();
+    const dbConfig = options.database || createDbConfigFromEnv();
     this.apiExecutor = new ApiExecutor(undefined, this.authContext);
 
     if (dbConfig) {
-      const driver = new MySQLDriver(dbConfig);
-      this.dbExecutor = new DbExecutor(driver, dbConfig);
-      this.dbToolGenerator = new DbToolGenerator(this.dbExecutor);
+      this.dbExecutor = new DbExecutor(dbConfig.driver, dbConfig.permissions);
+      this.dbToolGenerator = new DbToolGenerator(dbConfig.driver, dbConfig.permissions);
     }
 
     this.server = new McpServer({

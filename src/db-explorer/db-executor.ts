@@ -1,14 +1,11 @@
-import { DbDriver, DbConfig } from "./types.js";
+import { DbDriver, DbDriverPermissions } from "./types.js";
 import { SqlValidator } from "./sql-validator.js";
 
 export class DbExecutor {
-  private driver: DbDriver;
-  private config: DbConfig;
-
-  constructor(driver: DbDriver, config: DbConfig) {
-    this.driver = driver;
-    this.config = config;
-  }
+  constructor(
+    private driver: DbDriver,
+    private permissions: DbDriverPermissions = {}
+  ) {}
 
   getDriver(): DbDriver {
     return this.driver;
@@ -22,8 +19,8 @@ export class DbExecutor {
     await this.driver.disconnect();
   }
 
-  async listTables() {
-    return await this.driver.listTables();
+  async listTables(tables?: string[]) {
+    return await this.driver.listTables(tables);
   }
 
   async describeTable(table: string) {
@@ -63,7 +60,7 @@ export class DbExecutor {
   }
 
   async runQuery(query: string) {
-    if (this.config.enableRunQuery === false) {
+    if (this.permissions.enableRunQuery === false) {
       throw new Error("Tool 'run_query' is disabled.");
     }
     SqlValidator.isSelectOnly(query);
@@ -71,7 +68,7 @@ export class DbExecutor {
   }
 
   async runUpdateStatement(query: string) {
-    if (this.config.enableRunUpdateStatement === false) {
+    if (this.permissions.enableRunUpdateStatement === false) {
       throw new Error("Tool 'run_update_statement' is disabled.");
     }
     SqlValidator.isUpdateOnly(query);
@@ -79,7 +76,7 @@ export class DbExecutor {
   }
 
   async runDeleteStatement(query: string) {
-    if (this.config.enableRunDeleteStatement !== true) {
+    if (this.permissions.enableRunDeleteStatement !== true) {
       throw new Error("Tool 'run_delete_statement' is disabled.");
     }
     SqlValidator.isDeleteOnly(query);
@@ -87,9 +84,24 @@ export class DbExecutor {
   }
 
   async runStatement(query: string) {
-    if (this.config.enableRunStatement !== true) {
+    if (this.permissions.enableRunStatement !== true) {
       throw new Error("Tool 'run_statement' is disabled.");
     }
     return await this.driver.executeStatement(query);
+  }
+
+  async handleToolCall(name: string, args: any) {
+    switch (name) {
+      case "db_run_query":
+        return await this.runQuery(args.query);
+      case "db_run_update_statement":
+        return await this.runUpdateStatement(args.query);
+      case "db_run_delete_statement":
+        return await this.runDeleteStatement(args.query);
+      case "db_run_statement":
+        return await this.runStatement(args.query);
+      default:
+        return await this.driver.handleToolCall(name, args);
+    }
   }
 }
