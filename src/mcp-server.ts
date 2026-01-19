@@ -5,6 +5,10 @@ import { OpenAPIParser } from "./api-explorer/openapi-parser.js";
 import { ToolGenerator } from "./api-explorer/tool-generator.js";
 import { ApiExecutor } from "./api-explorer/api-executor.js";
 import { AuthContext, createAuthContextFromEnv } from "./api-explorer/auth/index.js";
+import { DbExecutor, DbToolGenerator } from "./db-explorer/index.js";
+import type { DbConfig } from "./db-explorer/index.js";
+import { MySQLDriver } from "./db-explorer/drivers/mysql-driver.js";
+
 
 /**
  * The main MCP Server implementation that coordinates the OpenAPI parser, 
@@ -21,16 +25,25 @@ export class MCPServer {
   private toolGenerator: ToolGenerator;
   private apiExecutor: ApiExecutor;
   private authContext: AuthContext;
+  private dbExecutor?: DbExecutor;
+  private dbToolGenerator?: DbToolGenerator;
 
   /**
    * @param specPath - Path to the OpenAPI specification file.
    * @param authContext - Optional custom AuthContext. If not provided, creates one from environment variables.
    */
-  constructor(private specPath: string, authContext?: AuthContext) {
+  constructor(private specPath: string, authContext?: AuthContext, dbConfig?: DbConfig) {
     this.parser = new OpenAPIParser();
     this.toolGenerator = new ToolGenerator(this.parser);
     this.authContext = authContext || createAuthContextFromEnv();
     this.apiExecutor = new ApiExecutor(undefined, this.authContext);
+
+    if (dbConfig) {
+      const driver = new MySQLDriver(dbConfig);
+      this.dbExecutor = new DbExecutor(driver, dbConfig);
+      this.dbToolGenerator = new DbToolGenerator(this.dbExecutor);
+    }
+
 
     this.server = new McpServer({
       name: "project-mcp-server",
@@ -42,6 +55,11 @@ export class MCPServer {
     try {
       await this.parser.loadSpec(this.specPath);
       console.error(`Loaded OpenAPI spec from ${this.specPath}`);
+      
+      if (this.dbExecutor) {
+        await this.dbExecutor.connect();
+      }
+
       this.registerTools();
     } catch (error) {
       console.error(`Failed to load OpenAPI spec: ${error}`);
@@ -79,6 +97,36 @@ export class MCPServer {
         }
       );
     });
+
+    if (this.dbToolGenerator) {
+      const dbDefinitions = this.dbToolGenerator.getToolDefinitions();
+
+      Object.entries(dbDefinitions).forEach(([name, def]) => {
+        const toolDef = def as any;
+        this.server.registerTool(
+          name,
+          {
+            description: toolDef.description,
+            inputSchema: toolDef.inputSchema,
+          },
+
+          async (args: any) => {
+            try {
+              const result = await this.dbToolGenerator!.handleToolCall(name, args);
+              return {
+                content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+              };
+            } catch (error: any) {
+              return {
+                content: [{ type: "text" as const, text: `Error: ${error.message}` }],
+                isError: true,
+              };
+            }
+          }
+        );
+      });
+    }
+
 
     this.server.registerTool(
       "set_identity",
