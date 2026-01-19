@@ -2,9 +2,6 @@ import { AuthContext, AuthStrategy, isIdentifiable } from "./types.js";
 import { BearerStrategy } from "./strategies/bearer-strategy.js";
 import { IdentityStrategy } from "./strategies/identity-strategy.js";
 import { NoAuthStrategy } from "./strategies/no-auth-strategy.js";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 /**
  * Standard implementation of AuthContext that wraps an AuthStrategy.

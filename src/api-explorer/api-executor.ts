@@ -1,8 +1,5 @@
 import axios, { AxiosInstance, Method, InternalAxiosRequestConfig } from "axios";
-import dotenv from "dotenv";
 import { AuthContext, createAuthContextFromEnv, runRequestHooks } from "./auth/index.js";
-
-dotenv.config();
 
 export interface CallEndpointArgs {
   method: string;
