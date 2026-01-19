@@ -19,6 +19,21 @@ import { MySQLDriver } from "./db-explorer/drivers/mysql-driver.js";
  * 2. Execute calls to any endpoint with dynamic authentication.
  * 3. Impersonate users via the set_identity tool.
  */
+export interface MCPServerOptions {
+  specPath: string;
+  authContext?: AuthContext;
+  dbConfig?: DbConfig;
+}
+
+/**
+ * The main MCP Server implementation that coordinates the OpenAPI parser, 
+ * tool generation, and API execution.
+ * 
+ * It registers meta-tools that allow LLMs to:
+ * 1. Discover API structure (tags, endpoints, schemas).
+ * 2. Execute calls to any endpoint with dynamic authentication.
+ * 3. Impersonate users via the set_identity tool.
+ */
 export class MCPServer {
   private server: McpServer;
   private parser: OpenAPIParser;
@@ -27,23 +42,23 @@ export class MCPServer {
   private authContext: AuthContext;
   private dbExecutor?: DbExecutor;
   private dbToolGenerator?: DbToolGenerator;
+  private specPath: string;
 
   /**
-   * @param specPath - Path to the OpenAPI specification file.
-   * @param authContext - Optional custom AuthContext. If not provided, creates one from environment variables.
+   * @param options - Configuration options for the MCP Server.
    */
-  constructor(private specPath: string, authContext?: AuthContext, dbConfig?: DbConfig) {
+  constructor(options: MCPServerOptions) {
+    this.specPath = options.specPath;
     this.parser = new OpenAPIParser();
     this.toolGenerator = new ToolGenerator(this.parser);
-    this.authContext = authContext || createAuthContextFromEnv();
+    this.authContext = options.authContext || createAuthContextFromEnv();
     this.apiExecutor = new ApiExecutor(undefined, this.authContext);
 
-    if (dbConfig) {
-      const driver = new MySQLDriver(dbConfig);
-      this.dbExecutor = new DbExecutor(driver, dbConfig);
+    if (options.dbConfig) {
+      const driver = new MySQLDriver(options.dbConfig);
+      this.dbExecutor = new DbExecutor(driver, options.dbConfig);
       this.dbToolGenerator = new DbToolGenerator(this.dbExecutor);
     }
-
 
     this.server = new McpServer({
       name: "project-mcp-server",
