@@ -5,6 +5,20 @@
   "repository": "https://github.com/WilliamPinto-Olmos/project-mcp-server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "agent",
+    "openapi",
+    "database",
+    "api",
+    "sql",
+    "cursor",
+    "claudecode",
+    "copilot"
+  ],
   "bin": {
     "project-mcp-server": "dist/cli.js"
   },
