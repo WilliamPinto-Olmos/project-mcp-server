@@ -1,6 +1,6 @@
 {
   "name": "@williamp29/project-mcp-server",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "A ModelContextProtocol server to let agents discover your project, such as APIs (using OpenAPI) or other resources.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
