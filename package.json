@@ -41,7 +41,8 @@
     "start": "node dist/cli.js",
     "dev": "ts-node src/cli.ts",
     "inspector": "npx @modelcontextprotocol/inspector node dist/cli.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "publish": "npm publish --access public"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
