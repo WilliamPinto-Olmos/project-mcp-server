@@ -4,10 +4,13 @@ import { z } from "zod";
 import { OpenAPIParser } from "./api-explorer/openapi-parser.js";
 import { ToolGenerator } from "./api-explorer/tool-generator.js";
 import { ApiExecutor } from "./api-explorer/api-executor.js";
+import { ApiConfig } from "./api-explorer/index.js";
 import { AuthContext, createAuthContextFromEnv } from "./api-explorer/auth/index.js";
 import { createDbConfigFromEnv, DbExecutor, DbToolGenerator } from "./db-explorer/index.js";
 import type { DatabaseConfig } from "./db-explorer/index.js";
 
+
+export type { ApiConfig };
 
 /**
  * The main MCP Server implementation that coordinates the OpenAPI parser, 
@@ -20,7 +23,7 @@ import type { DatabaseConfig } from "./db-explorer/index.js";
  */
 export interface MCPServerOptions {
   specPath: string;
-  authContext?: AuthContext;
+  api?: ApiConfig;
   database?: DatabaseConfig;
 }
 
@@ -50,9 +53,10 @@ export class MCPServer {
     this.specPath = options.specPath;
     this.parser = new OpenAPIParser();
     this.toolGenerator = new ToolGenerator(this.parser);
-    this.authContext = options.authContext || createAuthContextFromEnv();
+    this.authContext = options.api?.authContext || createAuthContextFromEnv();
+    const apiBaseUrl = options.api?.baseUrl;
     const dbConfig = options.database || createDbConfigFromEnv();
-    this.apiExecutor = new ApiExecutor(undefined, this.authContext);
+    this.apiExecutor = new ApiExecutor(apiBaseUrl, this.authContext);
 
     if (dbConfig) {
       this.dbExecutor = new DbExecutor(dbConfig.driver, dbConfig.permissions);

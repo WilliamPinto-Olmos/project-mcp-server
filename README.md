@@ -66,7 +66,10 @@ const mysqlDriver = new MySQLDriver({
 // 3. Create and start the server
 const server = new MCPServer({
   specPath: "./openapi-spec.json",
-  authContext: new GlobalAuthContext(new MyCustomAuth()),
+  api: {
+    baseUrl: "https://api.example.com",
+    authContext: new GlobalAuthContext(new MyCustomAuth()),
+  },
   database: {
     driver: mysqlDriver,
     permissions: {
@@ -116,6 +119,9 @@ class MyPostgresDriver implements DbDriver {
 
 const server = new MCPServer({
   specPath: "./openapi-spec.json",
+  api: {
+    baseUrl: "https://api.example.com",
+  },
   database: {
     driver: new MyPostgresDriver()
   }
