@@ -50,8 +50,8 @@ export class DbExecutor {
     return results;
   }
 
-  async getRelationships() {
-    return await this.driver.getRelationships();
+  async getRelationships(tables?: string[]) {
+    return await this.driver.getRelationships(tables);
   }
 
   async getTableStats(table: string) {

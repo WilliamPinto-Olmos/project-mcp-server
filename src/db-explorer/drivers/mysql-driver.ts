@@ -125,18 +125,25 @@ export class MySQLDriver implements DbDriver {
     return rows[0]?.["Create Table"] || "";
   }
 
-  async getRelationships(): Promise<Relationship[]> {
-    const [rows] = await this.getPool().execute<RowDataPacket[]>(
-      `SELECT 
+  async getRelationships(tables?: string[]): Promise<Relationship[]> {
+    let query = `SELECT 
         CONSTRAINT_NAME as constraintName, 
         TABLE_NAME as fromTable, 
         COLUMN_NAME as fromColumn, 
         REFERENCED_TABLE_NAME as toTable, 
         REFERENCED_COLUMN_NAME as toColumn
        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-       WHERE TABLE_SCHEMA = ? AND REFERENCED_TABLE_NAME IS NOT NULL`,
-      [this.config.database]
-    );
+       WHERE TABLE_SCHEMA = ? AND REFERENCED_TABLE_NAME IS NOT NULL`;
+    
+    const params: any[] = [this.config.database];
+
+    if (tables && tables.length > 0) {
+      const placeholders = tables.map(() => "?").join(",");
+      query += ` AND (TABLE_NAME IN (${placeholders}) OR REFERENCED_TABLE_NAME IN (${placeholders}))`;
+      params.push(...tables, ...tables);
+    }
+
+    const [rows] = await this.getPool().execute<RowDataPacket[]>(query, params);
 
     return rows.map((r: RowDataPacket) => ({
       constraintName: r.constraintName,
@@ -173,16 +180,16 @@ export class MySQLDriver implements DbDriver {
   }
 
   async sampleRows(table: string, limit: number = 10): Promise<any[]> {
+    const safeLimit = Math.max(1, Math.floor(Number(limit) || 10));
     const [rows] = await this.getPool().execute<RowDataPacket[]>(
-      `SELECT * FROM \`${table}\` LIMIT ?`,
-      [limit]
+      `SELECT * FROM \`${table}\` LIMIT ${safeLimit}`
     );
     return rows;
   }
 
   async executeQuery(query: string): Promise<QueryResult> {
-    const [rows, fields] = await this.getPool().execute<RowDataPacket[]>(query);
-    return { rows, fields };
+    const [rows] = await this.getPool().execute<RowDataPacket[]>(query);
+    return { rows };
   }
 
   async executeUpdate(query: string): Promise<UpdateResult> {

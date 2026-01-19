@@ -23,32 +23,32 @@ export class ToolGenerator {
    */
   getToolDefinitions() {
     return {
-      get_tags: {
+      api_get_tags: {
         description: "Get all unique tags defined in the API spec. This helps to group and discover endpoints.",
       },
-      get_tag_endpoints: {
+      api_get_tag_endpoints: {
         description: "Get all endpoints associated with a specific tag. Returns a summary of each endpoint.",
         inputSchema: z.object({
           tag: z.string().describe("The tag to filter endpoints by."),
         }),
       },
-      get_tags_endpoints: {
+      api_get_tags_endpoints: {
         description: "Get all endpoints associated with multiple tags. Returns a summary of each endpoint.",
         inputSchema: z.object({
           tags: z.array(z.string()).describe("The tags to filter endpoints by."),
         }),
       },
-      get_all_endpoints: {
+      api_get_all_endpoints: {
         description: "Get a summarized list of all endpoints available in the API.",
       },
-      get_endpoint: {
+      api_get_endpoint: {
         description: "Get detailed information about a specific endpoint, including parameters and request body schema.",
         inputSchema: z.object({
           method: z.string().describe("The HTTP method (GET, POST, etc.)."),
           path: z.string().describe("The endpoint path."),
         }),
       },
-      get_endpoints: {
+      api_get_endpoints: {
         description: "Get detailed information for multiple specific endpoints.",
         inputSchema: z.object({
           requests: z.array(
@@ -59,7 +59,7 @@ export class ToolGenerator {
           ).describe("List of endpoint requests."),
         }),
       },
-      call_endpoint: {
+      api_call_endpoint: {
         description: "Execute a request to a project's endpoint using the specified parameters and body.",
         inputSchema: z.object({
           method: z.string().describe("The HTTP method."),
@@ -73,17 +73,17 @@ export class ToolGenerator {
 
   handleToolCall(name: string, args: any) {
     switch (name) {
-      case "get_tags":
+      case "api_get_tags":
         return this.parser.getTags();
-      case "get_tag_endpoints":
+      case "api_get_tag_endpoints":
         return this.parser.getEndpointsByTag(args.tag);
-      case "get_tags_endpoints":
+      case "api_get_tags_endpoints":
         return this.parser.getEndpointsByTags(args.tags);
-      case "get_all_endpoints":
+      case "api_get_all_endpoints":
         return this.parser.getEndpoints();
-      case "get_endpoint":
+      case "api_get_endpoint":
         return this.parser.getEndpoint(args.method, args.path);
-      case "get_endpoints":
+      case "api_get_endpoints":
         return args.requests.map((r: any) => this.parser.getEndpoint(r.method, r.path));
       default:
         throw new Error(`Unknown tool: ${name}`);

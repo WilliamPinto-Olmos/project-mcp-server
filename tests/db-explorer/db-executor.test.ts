@@ -76,4 +76,12 @@ describe("DbExecutor", () => {
         .rejects.toThrow("Only removal queries");
     });
   });
+
+  describe("Relationships", () => {
+    it("should pass tables filter to driver in getRelationships", async () => {
+      const tables = ["users", "orders"];
+      await executor.getRelationships(tables);
+      expect(mockDriver.getRelationships).toHaveBeenCalledWith(tables);
+    });
+  });
 });

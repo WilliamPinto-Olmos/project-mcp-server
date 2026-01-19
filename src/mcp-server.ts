@@ -95,7 +95,7 @@ export class MCPServer {
         async (args: any) => { 
           try {
             let result;
-            if (name === "call_endpoint") {
+            if (name === "api_call_endpoint") {
               result = await this.apiExecutor.callEndpoint(args);
             } else {
               result = this.toolGenerator.handleToolCall(name, args);
@@ -144,7 +144,7 @@ export class MCPServer {
 
 
     this.server.registerTool(
-      "set_identity",
+      "api_set_identity",
       {
         description: "Set the identity (identifier) for future API requests. Requires an 'identity' auth strategy to be active.",
         inputSchema: z.object({

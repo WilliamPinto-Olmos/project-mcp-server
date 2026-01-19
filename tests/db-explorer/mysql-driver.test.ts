@@ -98,4 +98,27 @@ describe("MySQLDriver", () => {
     expect(relationships[0].fromTable).toBe("orders");
     expect(relationships[0].toTable).toBe("users");
   });
+
+  it("should filter relationships by table names", async () => {
+    mockPool.execute.mockResolvedValueOnce([
+      [
+        {
+          constraintName: "fk_user",
+          fromTable: "orders",
+          fromColumn: "user_id",
+          toTable: "users",
+          toColumn: "id",
+        },
+      ],
+    ]);
+
+    await driver.connect();
+    const relationships = await driver.getRelationships(["orders"]);
+
+    expect(mockPool.execute).toHaveBeenCalledWith(
+      expect.stringContaining("AND (TABLE_NAME IN (?) OR REFERENCED_TABLE_NAME IN (?))"),
+      ["testdb", "orders", "orders"]
+    );
+    expect(relationships).toHaveLength(1);
+  });
 });

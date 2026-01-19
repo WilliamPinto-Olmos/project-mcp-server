@@ -107,12 +107,14 @@ These variables control the server behavior. They are automatically loaded if yo
 ## Features
 
 - **API Explorer**:
-  - Automatically parses simple OpenAPI 3.0 specifications.
-  - Exposes tools to `get_tags`, `get_endpoints`, and `call_endpoint`.
+  - Automatically parses OpenAPI 3.0 specifications.
+  - Exposes tools like `api_get_tags`, `api_get_endpoints`, and `api_call_endpoint`.
   - Supports dynamic path parameters and JSON bodies.
-  - `set_identity`: Switch the active user context for API calls dynamically during a session.
+  - `api_set_identity`: Switch the active user context for API calls dynamically during a session.
 
 - **Database Explorer**:
-  - Inspect schemas and tables.
-  - Run safe `SELECT` queries to understand data structure.
-  - Supports MySQL (driver included, other drivers can be added manually)
+  - Inspect schemas with `db_list_tables`, `db_describe_tables`, and `db_get_schemas`.
+  - Discover database structure with `db_get_relationships` (supports table filtering).
+  - Analyze data with `db_get_table_stats` and `db_sample_rows`.
+  - Run validated SQL with `db_run_query`, `db_run_update_statement`, and `db_run_delete_statement`.
+  - Supports MySQL (driver included).

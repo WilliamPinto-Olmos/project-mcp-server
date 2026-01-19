@@ -21,24 +21,24 @@ describe("ToolGenerator", () => {
     const definitions = toolGenerator.getToolDefinitions();
     const names = Object.keys(definitions);
     expect(names.length).toBe(7);
-    expect(names).toContain("get_tags");
-    expect(names).toContain("call_endpoint");
+    expect(names).toContain("api_get_tags");
+    expect(names).toContain("api_call_endpoint");
   });
 
-  it("should handle get_tags", () => {
-    const response = toolGenerator.handleToolCall("get_tags", {});
+  it("should handle api_get_tags", () => {
+    const response = toolGenerator.handleToolCall("api_get_tags", {});
     expect(response).toContain("Projects");
   });
 
-  it("should handle get_tag_endpoints", () => {
-    const response = toolGenerator.handleToolCall("get_tag_endpoints", { tag: "Projects" });
+  it("should handle api_get_tag_endpoints", () => {
+    const response = toolGenerator.handleToolCall("api_get_tag_endpoints", { tag: "Projects" });
     const endpoints = response as any[];
     expect(endpoints.length).toBeGreaterThan(0);
     expect(endpoints.every((e: any) => e.tags.includes("Projects"))).toBe(true);
   });
 
-  it("should handle get_endpoint", () => {
-    const response = toolGenerator.handleToolCall("get_endpoint", { method: "GET", path: "/project-api" });
+  it("should handle api_get_endpoint", () => {
+    const response = toolGenerator.handleToolCall("api_get_endpoint", { method: "GET", path: "/project-api" });
     const endpoint = response as any;
     expect(endpoint.path).toBe("/project-api");
     expect(endpoint.method).toBe("GET");

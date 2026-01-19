@@ -1,7 +1,7 @@
 #!/usr/bin/env node
+import "dotenv/config";
 import { DbConfig, MCPServer } from "./index.js";
 import path from "path";
-import { fileURLToPath } from "url";
 
 const specPath = process.env.PROJECT_MCP_OPENAPI_SPEC || path.resolve(process.cwd(), "openapi-spec.json");
 

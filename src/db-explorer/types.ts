@@ -6,7 +6,7 @@ export interface DbDriver {
   listTables(): Promise<TableInfo[]>;
   describeTable(table: string): Promise<ColumnInfo[]>;
   getTableSchema(table: string): Promise<string>;
-  getRelationships(): Promise<Relationship[]>;
+  getRelationships(tables?: string[]): Promise<Relationship[]>;
   getTableStats(table: string): Promise<TableStats>;
   
   sampleRows(table: string, limit?: number): Promise<any[]>;

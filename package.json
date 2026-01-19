@@ -40,13 +40,14 @@
     "build": "tsc",
     "start": "node dist/cli.js",
     "dev": "ts-node src/cli.ts",
+    "inspector": "npx @modelcontextprotocol/inspector node dist/cli.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
     "@modelcontextprotocol/sdk": "^1.25.2",
     "axios": "^1.13.2",
-    "dotenv": "^17.2.3",
+    "dotenv": "^16.4.5",
     "mysql2": "^3.16.1",
     "openapi-types": "^12.1.3",
     "zod": "^4.3.5"
