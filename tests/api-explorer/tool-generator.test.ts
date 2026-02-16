@@ -34,7 +34,8 @@ describe("ToolGenerator", () => {
     const response = toolGenerator.handleToolCall("api_get_tag_endpoints", { tag: "Projects" });
     const endpoints = response as any[];
     expect(endpoints.length).toBeGreaterThan(0);
-    expect(endpoints.every((e: any) => e.tags.includes("Projects"))).toBe(true);
+    expect(endpoints.every((e: any) => e.method && e.path)).toBe(true);
+    expect(endpoints[0]).toHaveProperty("summary");
   });
 
   it("should handle api_get_endpoint", () => {

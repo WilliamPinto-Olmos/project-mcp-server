@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { z } from "zod";
+import { watch, type FSWatcher } from "node:fs";
 import { OpenAPIParser } from "./api-explorer/openapi-parser.js";
 import { ToolGenerator } from "./api-explorer/tool-generator.js";
 import { ApiExecutor } from "./api-explorer/api-executor.js";
@@ -26,6 +27,8 @@ export interface MCPServerOptions {
   specPath?: string;
   api?: ApiConfig;
   database?: DatabaseConfig;
+  /** Watch the OpenAPI spec file for changes and auto-reload the API explorer. */
+  watch?: boolean;
 }
 
 /**
@@ -48,6 +51,7 @@ export class MCPServer {
   private specPath?: string;
   private transport?: Transport;
   private options: MCPServerOptions;
+  private watcher?: FSWatcher;
 
   /**
    * @param options - Configuration options for the MCP Server.
@@ -201,12 +205,47 @@ export class MCPServer {
     
     await this.server.connect(this.transport);
     console.error("OpenAPI MCP server running on stdio");
+
+    if (this.options.watch && this.specPath) {
+      this.startWatcher();
+    }
+  }
+
+  private startWatcher() {
+    if (this.watcher || !this.specPath) return;
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    this.watcher = watch(this.specPath, (eventType) => {
+      if (eventType !== "change") return;
+
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        console.error("OpenAPI spec file changed, reloading API explorer...");
+        try {
+          await this.initApiExplorer();
+          console.error("API explorer reloaded successfully");
+        } catch (error) {
+          console.error(`Failed to reload API explorer: ${error}`);
+        }
+      }, 300);
+    });
+
+    console.error(`Watching OpenAPI spec file for changes: ${this.specPath}`);
+  }
+
+  private stopWatcher() {
+    if (this.watcher) {
+      this.watcher.close();
+      this.watcher = undefined;
+    }
   }
 
   /**
    * Stops the MCP server and disconnects any database connections.
    */
   async stop() {
+    this.stopWatcher();
     if (this.dbExecutor) {
       await this.dbExecutor.disconnect();
     }
