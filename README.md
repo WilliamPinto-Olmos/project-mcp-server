@@ -65,23 +65,44 @@ const mysqlDriver = new MySQLDriver({
 
 // 3. Create and start the server
 const server = new MCPServer({
-  specPath: "./openapi-spec.json",
+  specPath: "./openapi-spec.json", // Optional: Omit to skip API explorer
   api: {
     baseUrl: "https://api.example.com",
     authContext: new GlobalAuthContext(new MyCustomAuth()),
   },
-  database: {
+  database: { // Optional: Pass undefined to skip database initialization
     driver: mysqlDriver,
     permissions: {
-      enableRunQuery: true,         // Default: true
-      enableRunUpdateStatement: true, // Default: true
-      enableRunDeleteStatement: false, // Default: false
-      enableRunStatement: false      // Default: false
+      enableRunQuery: true,
+      enableRunUpdateStatement: true,
+      enableRunDeleteStatement: false,
+      enableRunStatement: false
     }
   }
 });
 
-server.start().catch(console.error);
+await server.start();
+```
+
+### Lifecycle Management
+
+The `MCPServer` class provides methods to manage the server's lifecycle programmatically:
+
+| Method | Description |
+| :--- | :--- |
+| `start()` | Initializes the API explorer and database connection, then connects to the transport. |
+| `stop()` | Gracefully disconnects from the database and closes the MCP server. |
+| `reload()` | Restarts the server, clearing registered tools and re-initializing all configurations. |
+
+Example:
+```typescript
+await server.start();
+
+// Later, to restart the server with refreshed configuration:
+await server.reload();
+
+// To shut down the server:
+await server.stop();
 ```
 
 ### 3. Custom Database Drivers

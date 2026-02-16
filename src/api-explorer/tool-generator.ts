@@ -76,11 +76,23 @@ export class ToolGenerator {
       case "api_get_tags":
         return this.parser.getTags();
       case "api_get_tag_endpoints":
-        return this.parser.getEndpointsByTag(args.tag);
+        return this.parser.getEndpointsByTag(args.tag).map(e => ({
+          method: e.method,
+          path: e.path,
+          summary: e.summary,
+        }));
       case "api_get_tags_endpoints":
-        return this.parser.getEndpointsByTags(args.tags);
+        return this.parser.getEndpointsByTags(args.tags).map(e => ({
+          method: e.method,
+          path: e.path,
+          summary: e.summary,
+        }));
       case "api_get_all_endpoints":
-        return this.parser.getEndpoints();
+        return this.parser.getEndpoints().map(e => ({
+          method: e.method,
+          path: e.path,
+          summary: e.summary,
+        }));
       case "api_get_endpoint":
         return this.parser.getEndpoint(args.method, args.path);
       case "api_get_endpoints":
