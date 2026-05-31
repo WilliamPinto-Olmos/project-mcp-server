@@ -27,7 +27,9 @@ export class OpenAPIParser {
    */
   async loadSpec(specPath: string): Promise<void> {
     try {
-      this.spec = await SwaggerParser.dereference(specPath);
+      this.spec = await SwaggerParser.dereference(specPath, {
+        dereference: { circular: "ignore" },
+      });
     } catch (error) {
       throw new Error(`Failed to parse OpenAPI spec: ${error instanceof Error ? error.message : String(error)}`);
     }

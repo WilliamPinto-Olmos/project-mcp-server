@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, beforeAll } from "@jest/globals";
+import { describe, it, expect, beforeAll } from "@jest/globals";
 import { ToolGenerator } from "../../src/api-explorer/tool-generator.js";
 import { OpenAPIParser } from "../../src/api-explorer/openapi-parser.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SPEC_PATH = path.resolve(__dirname, "../../openapi-spec.json");
+const SPEC_PATH = path.resolve(__dirname, "../fixtures/openapi-spec.json");
 
 describe("ToolGenerator", () => {
   let parser: OpenAPIParser;
@@ -27,11 +27,11 @@ describe("ToolGenerator", () => {
 
   it("should handle api_get_tags", () => {
     const response = toolGenerator.handleToolCall("api_get_tags", {});
-    expect(response).toContain("Projects");
+    expect(response).toContain("Hotels");
   });
 
   it("should handle api_get_tag_endpoints", () => {
-    const response = toolGenerator.handleToolCall("api_get_tag_endpoints", { tag: "Projects" });
+    const response = toolGenerator.handleToolCall("api_get_tag_endpoints", { tag: "Hotels" });
     const endpoints = response as any[];
     expect(endpoints.length).toBeGreaterThan(0);
     expect(endpoints.every((e: any) => e.method && e.path)).toBe(true);
@@ -39,9 +39,17 @@ describe("ToolGenerator", () => {
   });
 
   it("should handle api_get_endpoint", () => {
-    const response = toolGenerator.handleToolCall("api_get_endpoint", { method: "GET", path: "/project-api" });
+    const response = toolGenerator.handleToolCall("api_get_endpoint", { method: "GET", path: "/health" });
     const endpoint = response as any;
-    expect(endpoint.path).toBe("/project-api");
+    expect(endpoint.path).toBe("/health");
     expect(endpoint.method).toBe("GET");
+  });
+
+  it("should return serializable endpoint details for recursive inventory schemas", () => {
+    const response = toolGenerator.handleToolCall("api_get_endpoint", {
+      method: "GET",
+      path: "/hotels/inventory/template",
+    });
+    expect(() => JSON.stringify(response)).not.toThrow();
   });
 });
