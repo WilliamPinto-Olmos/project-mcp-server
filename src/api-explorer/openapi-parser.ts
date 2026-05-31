@@ -1,5 +1,6 @@
 import SwaggerParser from "@apidevtools/swagger-parser";
 import { OpenAPI } from "openapi-types";
+import { collectSchemaRefs } from "./schema-utils.js";
 
 export interface Endpoint {
   method: string;
@@ -19,6 +20,7 @@ export interface Endpoint {
  */
 export class OpenAPIParser {
   private spec: OpenAPI.Document | null = null;
+  private bundledSpec: OpenAPI.Document | null = null;
   private endpoints: Endpoint[] = [];
 
   /**
@@ -27,6 +29,7 @@ export class OpenAPIParser {
    */
   async loadSpec(specPath: string): Promise<void> {
     try {
+      this.bundledSpec = await SwaggerParser.bundle(specPath);
       this.spec = await SwaggerParser.dereference(specPath, {
         dereference: { circular: "ignore" },
       });
@@ -108,5 +111,44 @@ export class OpenAPIParser {
     return this.getEndpoints().find(
       (e) => e.method === method.toUpperCase() && e.path === path
     );
+  }
+
+  collectSchemaRefsForEndpoint(method: string, path: string): string[] {
+    const pathItem = this.bundledSpec?.paths?.[path] as Record<string, unknown> | undefined;
+    const operation = pathItem?.[method.toLowerCase()] as Record<string, unknown> | undefined;
+
+    if (!operation) {
+      return [];
+    }
+
+    const endpoint: Endpoint = {
+      method: method.toUpperCase(),
+      path,
+      parameters: operation.parameters as Endpoint["parameters"],
+      requestBody: operation.requestBody,
+      responses: operation.responses,
+    };
+
+    return collectSchemaRefs(endpoint, this.getComponentSchemas());
+  }
+
+  getComponentSchemas(): Record<string, unknown> {
+    const spec = this.getSpec() as any;
+    return spec.components?.schemas ?? {};
+  }
+
+  listSchemaNames(): string[] {
+    return Object.keys(this.getComponentSchemas()).sort();
+  }
+
+  getSchemas(names: string[]): Record<string, unknown> {
+    const schemas = this.getComponentSchemas();
+    const missing = names.filter((name) => !(name in schemas));
+
+    if (missing.length > 0) {
+      throw new Error(`Unknown schema(s): ${missing.join(", ")}`);
+    }
+
+    return Object.fromEntries(names.map((name) => [name, schemas[name]]));
   }
 }

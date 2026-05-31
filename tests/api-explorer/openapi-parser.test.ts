@@ -84,4 +84,38 @@ describe("OpenAPIParser", () => {
       path: "/hotels/inventory/template",
     });
   });
+
+  it("should list schema names from components.schemas", async () => {
+    await parser.loadSpec(SPEC_PATH);
+    expect(parser.listSchemaNames()).toEqual([
+      "ClientResponse",
+      "CreateClientOpenApi",
+      "InventoryItem",
+      "InventorySection",
+      "InventoryTemplate",
+    ]);
+  });
+
+  it("should return schemas by name", async () => {
+    await parser.loadSpec(SPEC_PATH);
+    const schemas = parser.getSchemas(["CreateClientOpenApi", "ClientResponse"]);
+
+    expect(schemas.CreateClientOpenApi).toMatchObject({
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        email: { type: "string" },
+      },
+    });
+    expect(schemas.ClientResponse).toMatchObject({
+      type: "object",
+    });
+  });
+
+  it("should throw when requesting unknown schema names", async () => {
+    await parser.loadSpec(SPEC_PATH);
+    expect(() => parser.getSchemas(["DoesNotExist"])).toThrow(
+      "Unknown schema(s): DoesNotExist"
+    );
+  });
 });

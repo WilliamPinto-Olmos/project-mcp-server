@@ -20,9 +20,11 @@ describe("ToolGenerator", () => {
   it("should return the list of meta-tools", () => {
     const definitions = toolGenerator.getToolDefinitions();
     const names = Object.keys(definitions);
-    expect(names.length).toBe(7);
+    expect(names.length).toBe(9);
     expect(names).toContain("api_get_tags");
     expect(names).toContain("api_call_endpoint");
+    expect(names).toContain("api_list_schemas");
+    expect(names).toContain("api_get_schemas");
   });
 
   it("should handle api_get_tags", () => {
@@ -43,6 +45,46 @@ describe("ToolGenerator", () => {
     const endpoint = response as any;
     expect(endpoint.path).toBe("/health");
     expect(endpoint.method).toBe("GET");
+    expect(endpoint.schemaRefs).toEqual([]);
+    expect(endpoint.links).toEqual({});
+  });
+
+  it("should enrich api_get_endpoint with schemaRefs and links", () => {
+    const response = toolGenerator.handleToolCall("api_get_endpoint", {
+      method: "POST",
+      path: "/clients",
+    }) as any;
+
+    expect(response.schemaRefs).toEqual(["ClientResponse", "CreateClientOpenApi"]);
+    expect(response.links.schemas).toEqual({
+      tool: "api_get_schemas",
+      params: { names: ["ClientResponse", "CreateClientOpenApi"] },
+    });
+  });
+
+  it("should handle api_list_schemas", () => {
+    const response = toolGenerator.handleToolCall("api_list_schemas", {});
+    expect(response).toContain("InventoryItem");
+    expect(response).toContain("CreateClientOpenApi");
+  });
+
+  it("should handle api_get_schemas", () => {
+    const response = toolGenerator.handleToolCall("api_get_schemas", {
+      names: ["CreateClientOpenApi"],
+    }) as any;
+
+    expect(response.CreateClientOpenApi).toMatchObject({
+      type: "object",
+      properties: {
+        name: { type: "string" },
+      },
+    });
+  });
+
+  it("should throw for unknown schema names in api_get_schemas", () => {
+    expect(() =>
+      toolGenerator.handleToolCall("api_get_schemas", { names: ["MissingSchema"] })
+    ).toThrow("Unknown schema(s): MissingSchema");
   });
 
   it("should return serializable endpoint details for recursive inventory schemas", () => {

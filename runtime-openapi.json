@@ -1,0 +1,1645 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CIS Backend API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Estado del servicio y dependencias"
+    },
+    {
+      "name": "Clients",
+      "description": "Alta y consulta de clientes"
+    },
+    {
+      "name": "Hotels",
+      "description": "Hoteles, inventario y ficha técnica"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "InventoryOption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "value",
+          "label"
+        ]
+      },
+      "InventoryResponse": {
+        "type": "object",
+        "properties": {
+          "responseId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "hotelItemId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "select",
+              "container",
+              "entity",
+              "number",
+              "check"
+            ]
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "numberValue": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "textValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hotelItemResponseOptionId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "responseId",
+          "hotelItemId",
+          "type"
+        ]
+      },
+      "InventoryInstance": {
+        "type": "object",
+        "properties": {
+          "responseId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "hotelItemId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "select",
+              "container",
+              "entity",
+              "number",
+              "check"
+            ]
+          },
+          "responses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryResponse"
+            }
+          }
+        },
+        "required": [
+          "responseId",
+          "hotelItemId",
+          "type",
+          "responses"
+        ]
+      },
+      "InventoryItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "select",
+              "container",
+              "entity",
+              "number",
+              "check"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryOption"
+            }
+          },
+          "responses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryResponse"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryItem"
+            }
+          },
+          "instances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryInstance"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name",
+          "description",
+          "options",
+          "responses",
+          "children"
+        ]
+      },
+      "InventorySection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "iconId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryItem"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "index",
+          "iconId",
+          "items"
+        ]
+      },
+      "HealthCheckResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "database": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "database"
+        ]
+      },
+      "ClientLogoUploadUrlResponse": {
+        "type": "object",
+        "properties": {
+          "storagePath": {
+            "type": "string"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "uploadExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "readExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "storagePath",
+          "uploadUrl",
+          "uploadExpiresAt",
+          "readUrl",
+          "readExpiresAt"
+        ]
+      },
+      "ClientLogoUploadFileInput": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png"
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 2097152
+          }
+        },
+        "required": [
+          "filename",
+          "contentType",
+          "sizeBytes"
+        ]
+      },
+      "ClientWithHotelsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ClientResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "hotels": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/HotelResponse"
+                }
+              }
+            },
+            "required": [
+              "hotels"
+            ]
+          }
+        ]
+      },
+      "ClientTypeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ClientStatusResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ClientLogoResponse": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "storagePath": {
+            "type": "string"
+          },
+          "readUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "readExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "storagePath",
+          "readUrl",
+          "readExpiresAt"
+        ]
+      },
+      "HotelResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "clientId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "mainContactName": {
+            "type": "string"
+          },
+          "mainContactEmail": {
+            "type": "string"
+          },
+          "starCategoryRating": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "diamondRating": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "address": {
+            "type": "string"
+          },
+          "hotelType": {
+            "$ref": "#/components/schemas/LocalizedHotelTypeResponse"
+          },
+          "country": {
+            "$ref": "#/components/schemas/LocalizedPlaceResponse"
+          },
+          "state": {
+            "$ref": "#/components/schemas/LocalizedPlaceResponse"
+          },
+          "city": {
+            "$ref": "#/components/schemas/LocalizedPlaceResponse"
+          },
+          "zone": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedPlaceResponse"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "auditModules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HotelAuditModuleAssignmentResponse"
+            }
+          },
+          "inventory": {
+            "$ref": "#/components/schemas/HotelInventory"
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HotelPhotoResponse"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "clientId",
+          "name",
+          "mainContactName",
+          "mainContactEmail",
+          "starCategoryRating",
+          "diamondRating",
+          "address",
+          "hotelType",
+          "country",
+          "state",
+          "city",
+          "zone",
+          "auditModules",
+          "inventory",
+          "photos"
+        ]
+      },
+      "LocalizedHotelTypeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "languageId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "languageId"
+        ]
+      },
+      "LocalizedPlaceResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "languageId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "languageId"
+        ]
+      },
+      "HotelAuditModuleAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "hotelId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "auditModule": {
+            "$ref": "#/components/schemas/AuditModuleResponse"
+          },
+          "frequency": {
+            "$ref": "#/components/schemas/FrequencyResponse"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "isTrial": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "hotelId",
+          "auditModule",
+          "frequency",
+          "isEnabled",
+          "isTrial"
+        ]
+      },
+      "AuditModuleResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "defaultFrequency": {
+            "$ref": "#/components/schemas/FrequencyResponse"
+          },
+          "canBeUsedAsTrial": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "icon",
+          "defaultFrequency",
+          "canBeUsedAsTrial"
+        ]
+      },
+      "FrequencyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "month": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "month"
+        ]
+      },
+      "HotelInventory": {
+        "type": "object",
+        "properties": {
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventorySection"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "sections"
+        ]
+      },
+      "HotelPhotoResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "storagePath": {
+            "type": "string"
+          },
+          "readUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "readExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "storagePath",
+          "readUrl",
+          "readExpiresAt"
+        ]
+      },
+      "ClientResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "mainContactName": {
+            "type": "string"
+          },
+          "mainContactEmail": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ClientTypeResponse"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ClientStatusResponse"
+          },
+          "logo": {
+            "$ref": "#/components/schemas/ClientLogoResponse"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "mainContactName",
+          "mainContactEmail",
+          "type",
+          "status",
+          "logo"
+        ]
+      },
+      "CreateClientOpenApi": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "mainContactName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "mainContactEmail": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "chain",
+              "independent",
+              "demo"
+            ]
+          },
+          "logoStoragePath": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "hotels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HotelUpsertOpenApi"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "mainContactName",
+          "mainContactEmail",
+          "type"
+        ]
+      },
+      "HotelUpsertOpenApi": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "mainContactName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "mainContactEmail": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "hotelTypeId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "countryId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "stateId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "cityId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "zoneId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "starCategoryRating": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
+          },
+          "diamondRating": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
+          },
+          "inventory": {
+            "$ref": "#/components/schemas/HotelInventory"
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HotelPhotoInput"
+            },
+            "maxItems": 20,
+            "default": []
+          },
+          "auditModules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditModuleAssignmentInput"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "name",
+          "mainContactName",
+          "mainContactEmail",
+          "address",
+          "hotelTypeId",
+          "countryId",
+          "stateId",
+          "cityId",
+          "inventory"
+        ]
+      },
+      "HotelPhotoInput": {
+        "type": "object",
+        "properties": {
+          "storagePath": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "storagePath"
+        ]
+      },
+      "AuditModuleAssignmentInput": {
+        "type": "object",
+        "properties": {
+          "auditModuleId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "frequencyId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "isTrial": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "auditModuleId",
+          "frequencyId"
+        ]
+      },
+      "ClientLogoPersistenceFailedResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "CLIENT_LOGO_PERSISTENCE_FAILED"
+            ]
+          },
+          "clientId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "clientId": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "storagePath": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "clientId",
+                "storagePath",
+                "reason"
+              ]
+            }
+          }
+        },
+        "required": [
+          "message",
+          "code",
+          "clientId",
+          "failures"
+        ]
+      },
+      "UpdateClientOpenApi": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "mainContactName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "mainContactEmail": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "logoStoragePath": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "name",
+          "mainContactName",
+          "mainContactEmail"
+        ]
+      },
+      "InventoryTemplate": {
+        "type": "object",
+        "properties": {
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventorySection"
+            }
+          }
+        },
+        "required": [
+          "sections"
+        ]
+      },
+      "HotelPhotoUploadUrlsResponse": {
+        "type": "object",
+        "properties": {
+          "uploads": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HotelPhotoUploadItemResponse"
+            }
+          }
+        },
+        "required": [
+          "uploads"
+        ]
+      },
+      "HotelPhotoUploadItemResponse": {
+        "type": "object",
+        "properties": {
+          "storagePath": {
+            "type": "string"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "uploadExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "readExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "storagePath",
+          "uploadUrl",
+          "uploadExpiresAt",
+          "readUrl",
+          "readExpiresAt"
+        ]
+      },
+      "HotelPhotoUploadUrlsBody": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HotelPhotoUploadFileInput"
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "files"
+        ]
+      },
+      "HotelPhotoUploadFileInput": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png"
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 2097152
+          }
+        },
+        "required": [
+          "filename",
+          "contentType",
+          "sizeBytes"
+        ]
+      },
+      "HotelPhotosPersistenceFailedResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "HOTEL_PHOTOS_PERSISTENCE_FAILED"
+            ]
+          },
+          "clientId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "hotels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            }
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HotelPhotoPersistenceFailure"
+            }
+          }
+        },
+        "required": [
+          "message",
+          "code",
+          "failures"
+        ]
+      },
+      "HotelPhotoPersistenceFailure": {
+        "type": "object",
+        "properties": {
+          "hotelId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "storagePath": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hotelId",
+          "storagePath",
+          "reason"
+        ]
+      },
+      "HotelUpdateOpenApi": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "mainContactName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "mainContactEmail": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "hotelTypeId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "countryId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "stateId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "cityId": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "zoneId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "starCategoryRating": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
+          },
+          "diamondRating": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
+          },
+          "inventory": {
+            "$ref": "#/components/schemas/HotelInventory"
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HotelPhotoInput"
+            },
+            "maxItems": 20,
+            "default": []
+          },
+          "auditModules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditModuleAssignmentInput"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "mainContactName",
+          "mainContactEmail",
+          "address",
+          "hotelTypeId",
+          "countryId",
+          "stateId",
+          "cityId",
+          "inventory"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Estado del servicio y la base de datos",
+        "responses": {
+          "200": {
+            "description": "Servicio y base de datos operativos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Servicio degradado o base de datos no disponible",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clients/logo/upload-url": {
+      "post": {
+        "tags": [
+          "Clients"
+        ],
+        "summary": "Generar URL firmada temporal para subir logotipo de cliente (ruta tmp)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientLogoUploadFileInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "URL firmada generada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientLogoUploadUrlResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación del logotipo"
+          }
+        }
+      }
+    },
+    "/clients/{id}/logo/upload-url": {
+      "post": {
+        "tags": [
+          "Clients"
+        ],
+        "summary": "Generar URL firmada temporal para subir logotipo a un cliente existente",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientLogoUploadFileInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "URL firmada generada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientLogoUploadUrlResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente no encontrado"
+          },
+          "422": {
+            "description": "Error de validación del logotipo"
+          }
+        }
+      }
+    },
+    "/clients": {
+      "post": {
+        "tags": [
+          "Clients"
+        ],
+        "summary": "Crear cliente con hoteles opcionales",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClientOpenApi"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cliente creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientWithHotelsResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de unicidad o límite de hoteles"
+          },
+          "422": {
+            "description": "Error de validación de negocio"
+          },
+          "502": {
+            "description": "Cliente creado, pero falló la persistencia del logotipo o de fotografías de hotel"
+          }
+        }
+      }
+    },
+    "/clients/{id}": {
+      "patch": {
+        "tags": [
+          "Clients"
+        ],
+        "summary": "Actualizar cliente",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClientOpenApi"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cliente actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente no encontrado"
+          },
+          "409": {
+            "description": "Conflicto de unicidad"
+          },
+          "502": {
+            "description": "Cliente actualizado, pero falló la sincronización del logotipo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientLogoPersistenceFailedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hotels/inventory/template": {
+      "get": {
+        "tags": [
+          "Hotels"
+        ],
+        "summary": "Plantilla vacía de inventario de ficha técnica",
+        "responses": {
+          "200": {
+            "description": "Secciones de plantilla",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryTemplate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hotels/photos/upload-urls": {
+      "post": {
+        "tags": [
+          "Hotels"
+        ],
+        "summary": "Generar URLs firmadas temporales para subir fotos de hotel (ruta tmp)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HotelPhotoUploadUrlsBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "URLs firmadas generadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelPhotoUploadUrlsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error de validación de fotografías"
+          }
+        }
+      }
+    },
+    "/hotels/{id}/photos/upload-urls": {
+      "post": {
+        "tags": [
+          "Hotels"
+        ],
+        "summary": "Generar URLs firmadas temporales para subir fotos a un hotel existente",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HotelPhotoUploadUrlsBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "URLs firmadas generadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelPhotoUploadUrlsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hotel no encontrado"
+          },
+          "422": {
+            "description": "Error de validación de fotografías"
+          }
+        }
+      }
+    },
+    "/clients/{clientId}/hotels": {
+      "post": {
+        "tags": [
+          "Hotels"
+        ],
+        "summary": "Crear hotel para un cliente",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HotelUpsertOpenApi"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Hotel creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente no encontrado"
+          },
+          "409": {
+            "description": "Límite de hoteles para cliente independiente"
+          }
+        }
+      }
+    },
+    "/hotels/{id}": {
+      "patch": {
+        "tags": [
+          "Hotels"
+        ],
+        "summary": "Actualizar hotel",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HotelUpdateOpenApi"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hotel actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hotel no encontrado"
+          },
+          "502": {
+            "description": "Hotel actualizado, pero falló la persistencia de una o más fotografías",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotelPhotosPersistenceFailedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

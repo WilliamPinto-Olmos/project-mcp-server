@@ -1,4 +1,5 @@
 import { OpenAPIParser } from "./openapi-parser.js";
+import { withSchemaReference } from "./schema-utils.js";
 import { z } from "zod";
 
 export interface ToolConfig {
@@ -42,7 +43,7 @@ export class ToolGenerator {
         description: "Get a summarized list of all endpoints available in the API.",
       },
       api_get_endpoint: {
-        description: "Get detailed information about a specific endpoint, including parameters and request body schema.",
+        description: "Get detailed information about a specific endpoint, including parameters, request/response schemas ($ref), schemaRefs, and links to resolve schemas via api_get_schemas.",
         inputSchema: z.object({
           method: z.string().describe("The HTTP method (GET, POST, etc.)."),
           path: z.string().describe("The endpoint path."),
@@ -59,6 +60,15 @@ export class ToolGenerator {
           ).describe("List of endpoint requests."),
         }),
       },
+      api_list_schemas: {
+        description: "List all schema names defined in components.schemas of the OpenAPI spec.",
+      },
+      api_get_schemas: {
+        description: "Get full schema definitions by name. Use when an endpoint response includes schema $ref pointers and you need their structure.",
+        inputSchema: z.object({
+          names: z.array(z.string()).describe("Schema names to retrieve (e.g. CreateClientOpenApi)."),
+        }),
+      },
       api_call_endpoint: {
         description: "Execute a request to a project's endpoint using the specified parameters and body.",
         inputSchema: z.object({
@@ -69,6 +79,12 @@ export class ToolGenerator {
         }),
       },
     };
+  }
+
+  private enrichEndpoint(endpoint: ReturnType<OpenAPIParser["getEndpoint"]>) {
+    if (!endpoint) return endpoint;
+    const schemaRefs = this.parser.collectSchemaRefsForEndpoint(endpoint.method, endpoint.path);
+    return withSchemaReference(endpoint, schemaRefs);
   }
 
   handleToolCall(name: string, args: any) {
@@ -94,9 +110,15 @@ export class ToolGenerator {
           summary: e.summary,
         }));
       case "api_get_endpoint":
-        return this.parser.getEndpoint(args.method, args.path);
+        return this.enrichEndpoint(this.parser.getEndpoint(args.method, args.path));
       case "api_get_endpoints":
-        return args.requests.map((r: any) => this.parser.getEndpoint(r.method, r.path));
+        return args.requests.map((r: any) =>
+          this.enrichEndpoint(this.parser.getEndpoint(r.method, r.path))
+        );
+      case "api_list_schemas":
+        return this.parser.listSchemaNames();
+      case "api_get_schemas":
+        return this.parser.getSchemas(args.names);
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
